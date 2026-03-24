@@ -86,4 +86,12 @@ This is the place for you to write reflections:
 
 #### Reflection Subscriber-1
 
+1. In this tutorial, we used `RwLock<>` to synchronise the use of `Vec<Notification>`. Explain why it is necessary for this case, and explain why we do not use `Mutex<>` instead?
+
+    `RwLock<>` is necessary because Rust's ownership and borrowing rules do not allow mutable access to a `static` variable without some form of synchronization. Since `NOTIFICATIONS` is a shared static variable that can be accessed by multiple threads (Rocket handles requests concurrently), we need a synchronization primitive. We use `RwLock` instead of `Mutex` because `RwLock` allows **multiple concurrent readers** while only requiring exclusive access for writers. In this application, reading the notification list (e.g., listing all messages) is expected to happen more frequently than writing (adding new notifications). With `Mutex`, every access — even read-only — would require exclusive locking, which creates unnecessary contention. `RwLock` optimizes for this read-heavy pattern by allowing multiple threads to read simultaneously.
+
+2. In this tutorial, we used `lazy_static` external library to define `Vec` and `DashMap` as a `static` variable. Explain based on your understanding of using Rust, is it possible to have a mutable `static` variable in Rust without using `lazy_static`?
+
+    In Rust, it is technically possible to have a mutable static variable using `static mut`, but it is **unsafe** and strongly discouraged. Accessing `static mut` variables requires `unsafe` blocks because the compiler cannot guarantee thread safety — multiple threads could read and write simultaneously, leading to data races. Rust's design philosophy enforces safety at compile time, so `static mut` is intentionally difficult to use. `lazy_static` (or the newer `std::sync::OnceLock`/`std::sync::LazyLock` in recent Rust versions) provides a safe way to initialize static variables lazily at runtime and combine them with thread-safe wrappers like `RwLock` or `DashMap` to allow mutation without unsafe code.
+
 #### Reflection Subscriber-2
